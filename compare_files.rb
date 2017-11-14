@@ -1,25 +1,42 @@
 require 'digest/md5'
 
-def md5_hash(file)
-  Digest::MD5.hexdigest(File.read(file))
-end
+class CompareFiles
+  def initialize(path)
+    @dir = path
+    @result = []
+  end
 
-# change 'test' on your directory name
-dir = 'test'
+  def result
+    Dir.chdir("#{@dir}/") do
+      each_file
+    end
+    @result
+  end
 
-result = []
+  private
 
-Dir.chdir("#{dir}/") do
-  Dir['*'].each do |f|
-    h = { filename: f, hash: md5_hash(f), count: 1 }
-    result.each do |el|
+  def each_file
+    Dir['*'].each do |f|
+      h = create_hash(f)
+      compare_hashes(h)
+    end
+  end
+
+  def create_hash(f)
+    { filename: f, hash: md5_hash(f), count: 1 }
+  end
+
+  def compare_hashes(h)
+    @result.each do |el|
       if el[:hash] == h[:hash]
         el[:count] += 1
         h[:count] += 1
       end
     end
-    result << h
+    @result << h
+  end
+
+  def md5_hash(file)
+    Digest::MD5.hexdigest(File.read(file))
   end
 end
-
-puts result
